@@ -1,0 +1,22 @@
+{
+  "name": "gcp-vm",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "$(npm bin)/tsc -p ./",
+    "doc": "$(npm bin)/typedoc --out doc ./src/",
+    "test": "$(npm bin)/mocha $(find ./out/test -name '*.js')"
+  },
+  "author": "Hiroaki Mikami",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.7",
+    "chai": "^4.2.0",
+    "mocha": "^6.2.0",
+    "typedoc": "^0.14.2",
+    "typescript": "^3.5.3"
+  }
+}
