@@ -411,7 +411,7 @@ describe("GCP", () => {
   });
   describe("#startMachine", () => {
     it("start a VM", async () => {
-      const vm = mock.mockVm();
+      const vm = mock.mockVm({});
       const zone = mock.mockZone(new Map([["vm", vm.instance]]), new Map());
       const compute = mock.mockCompute(
         new Map([["zone", zone.instance]]),
@@ -430,7 +430,7 @@ describe("GCP", () => {
   });
   describe("#stopMachine", () => {
     it("stop a VM", async () => {
-      const vm = mock.mockVm();
+      const vm = mock.mockVm({});
       const zone = mock.mockZone(new Map([["vm", vm.instance]]), new Map());
       const compute = mock.mockCompute(
         new Map([["zone", zone.instance]]),
@@ -449,7 +449,7 @@ describe("GCP", () => {
   });
   describe("#deleteMachine", () => {
     it("delete a VM", async () => {
-      const vm = mock.mockVm();
+      const vm = mock.mockVm({});
       const zone = mock.mockZone(new Map([["vm", vm.instance]]), new Map());
       const compute = mock.mockCompute(
         new Map([["zone", zone.instance]]),
@@ -464,6 +464,28 @@ describe("GCP", () => {
       verify(compute.mocked.zone("zone")).once();
       verify(zone.mocked.vm("vm")).once();
       verify(vm.mocked.delete()).once();
+    });
+  });
+  describe("#getPublicIpAddress", () => {
+    it("query the public IP address of the VM", async () => {
+      const vm = mock.mockVm({
+        networkInterfaces: [{ accessConfigs: [{ natIP: "result" }] }]
+      });
+      const zone = mock.mockZone(new Map([["vm", vm.instance]]), new Map());
+      const compute = mock.mockCompute(
+        new Map([["zone", zone.instance]]),
+        new Map()
+      );
+      const gcp = new GCP(
+        mock.mockLabelOptions,
+        compute.instance,
+        "https://tmp"
+      );
+      const result = await gcp.getPublicIpAddress("vm", "zone");
+      result.should.equal("result");
+      verify(compute.mocked.zone("zone")).once();
+      verify(zone.mocked.vm("vm")).once();
+      verify(vm.mocked.getMetadata()).once();
     });
   });
 });

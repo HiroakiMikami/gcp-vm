@@ -227,4 +227,12 @@ export class GCP {
     const op = await vm.delete();
     await op[0].promise();
   }
+  public async getPublicIpAddress(
+    machineName: string,
+    zone: string
+  ): Promise<string> {
+    const vm = this.compute.zone(zone).vm(machineName);
+    const [metadata] = await vm.getMetadata();
+    return metadata.networkInterfaces[0].accessConfigs[0].natIP;
+  }
 }

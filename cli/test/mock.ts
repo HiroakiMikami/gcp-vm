@@ -44,6 +44,7 @@ interface Vm {
   start(): Promise<[MockOperation]>;
   stop(): Promise<[MockOperation]>;
   delete(): Promise<[MockOperation]>;
+  getMetadata(): Promise<[{}]>;
 }
 
 interface Zone {
@@ -82,11 +83,12 @@ export function mockDisk(metadata: {} | null): MockObject<Disk> {
   return { mocked: mockedDisk, instance: disk };
 }
 
-export function mockVm(): MockObject<Vm> {
+export function mockVm(metadata: {}): MockObject<Vm> {
   let mockedVm = mock<Vm>();
   when(mockedVm.start()).thenResolve([new MockOperation()]);
   when(mockedVm.stop()).thenResolve([new MockOperation()]);
   when(mockedVm.delete()).thenResolve([new MockOperation()]);
+  when(mockedVm.getMetadata()).thenResolve([metadata]);
   const vm = instance(mockedVm);
 
   return { mocked: mockedVm, instance: vm };
