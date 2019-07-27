@@ -1,10 +1,28 @@
 import * as Compute from "@google-cloud/compute";
 import { Dictionary } from "lodash";
+import { isString } from "util";
 
 export interface LabelOptions {
   diskNameLabel: string;
   projectLabel: string;
   diskTypeLabel: string;
+}
+export interface CustumMachineType {
+  /** required the number of CPUs */
+  vCPU: number;
+  /** required memory size [GB] */
+  memory: number;
+}
+
+export interface Accelerator {
+  deviceType: string;
+  count: number;
+}
+
+export interface MachineOptions {
+  accelerators: readonly Accelerator[];
+  preemptible: boolean;
+  tags: readonly string[];
 }
 
 function zoneToRegion(zone: string): string {
@@ -127,6 +145,71 @@ export class GCP {
     // Create snapshot
     const configs = { labels, storageLocations: [zoneToRegion(zone)] };
     const op = await disk.createSnapshot(snapshotName, configs);
+    await op[1].promise();
+  }
+  public async createMachine(
+    machineName: string,
+    diskName: string,
+    zone: string,
+    machineType: string | CustumMachineType,
+    options: MachineOptions
+  ): Promise<void> {
+    let machineTypeStr = "";
+    if (isString(machineType)) {
+      machineTypeStr = machineType;
+    } else {
+      machineTypeStr = `custum-${machineType.vCPU}-${machineType.memory *
+        1024}`;
+    }
+    const accelerators = [];
+    for (const a of options.accelerators) {
+      accelerators.push({
+        acceleratorType: a.deviceType,
+        acceleratorCount: a.count
+      });
+    }
+
+    const zoneObj = this.compute.zone(zone);
+    const disk = zoneObj.disk(diskName);
+    const [diskMetadata] = await disk.getMetadata();
+    const configs = {
+      disks: [
+        {
+          autoDelete: false,
+          boot: true,
+          deviceName: diskName,
+          kind: "compute#attachedDisk",
+          mode: "READ_WRITE",
+          source: diskMetadata.selfLink,
+          type: "PERSISTENT"
+        }
+      ],
+      guestAccelerators: accelerators,
+      machineType: machineTypeStr,
+      networkInterfaces: [
+        {
+          accessConfigs: [
+            {
+              kind: "compute#accessConfig",
+              name: "External NAT",
+              networkTier: "PREMIUM",
+              type: "ONE_TO_ONE_NAT"
+            }
+          ],
+          aliasIpRanges: [],
+          kind: "compute#networkInterface"
+        }
+      ],
+      scheduling: {
+        automaticRestart: false,
+        onHostMaintenance: "TERMINATE",
+        preemptible: options.preemptible
+      },
+      tags: options.tags
+    };
+
+    // Create VM
+    const op = await zoneObj.createVM(machineName, configs);
     await op[1].promise();
   }
 }

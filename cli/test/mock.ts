@@ -42,6 +42,7 @@ interface Disk {
 
 interface Zone {
   disk(name: string): Disk;
+  createVM(name: string, configs: {}): Promise<[{} | null, MockOperation]>;
 }
 
 export function mcokSnapshot(metadata: SnapshotMetadata): MockObject<Snapshot> {
@@ -78,6 +79,9 @@ export function mockZone(disks: ReadonlyMap<string, Disk>): MockObject<Zone> {
   let mockedZone: Zone = mock<Zone>();
   disks.forEach((disk, name) => {
     when(mockedZone.disk(name)).thenReturn(disk);
+  });
+  when(mockedZone.createVM(anything(), anything())).thenCall(() => {
+    return Promise.resolve([null, new MockOperation()]);
   });
   const zone = instance(mockedZone);
 

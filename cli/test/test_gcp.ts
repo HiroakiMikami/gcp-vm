@@ -147,4 +147,266 @@ describe("GCP", () => {
         ]);
     });
   });
+  describe("#createMachine", () => {
+    it("create a VM", async () => {
+      const disk = mock.mockDisk({ selfLink: "link" });
+      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const compute = mock.mockCompute(
+        new Map([["zone", zone.instance]]),
+        new Map()
+      );
+      const gcp = new GCP(
+        mock.mockLabelOptions,
+        compute.instance,
+        "https://tmp"
+      );
+
+      await gcp.createMachine("vm", "test", "zone", "n1-highmem-4", {
+        accelerators: [],
+        preemptible: false,
+        tags: []
+      });
+      verify(compute.mocked.zone("zone")).once();
+      verify(zone.mocked.disk("test")).once();
+      verify(disk.mocked.getMetadata()).once();
+      verify(zone.mocked.createVM("vm", anything())).once();
+      capture(zone.mocked.createVM)
+        .last()
+        .should.deep.equal([
+          "vm",
+          {
+            disks: [
+              {
+                autoDelete: false,
+                boot: true,
+                deviceName: "test",
+                kind: "compute#attachedDisk",
+                mode: "READ_WRITE",
+                source: "link",
+                type: "PERSISTENT"
+              }
+            ],
+            guestAccelerators: [],
+            machineType: "n1-highmem-4",
+            networkInterfaces: [
+              {
+                accessConfigs: [
+                  {
+                    kind: "compute#accessConfig",
+                    name: "External NAT",
+                    networkTier: "PREMIUM",
+                    type: "ONE_TO_ONE_NAT"
+                  }
+                ],
+                aliasIpRanges: [],
+                kind: "compute#networkInterface"
+              }
+            ],
+            scheduling: {
+              automaticRestart: false,
+              onHostMaintenance: "TERMINATE",
+              preemptible: false
+            },
+            tags: []
+          }
+        ]);
+    });
+    it("specify a custum machine type", async () => {
+      const disk = mock.mockDisk({ selfLink: "link" });
+      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const compute = mock.mockCompute(
+        new Map([["zone", zone.instance]]),
+        new Map()
+      );
+      const gcp = new GCP(
+        mock.mockLabelOptions,
+        compute.instance,
+        "https://tmp"
+      );
+
+      await gcp.createMachine(
+        "vm",
+        "test",
+        "zone",
+        { vCPU: 24, memory: 100 },
+        {
+          accelerators: [],
+          preemptible: false,
+          tags: []
+        }
+      );
+      verify(compute.mocked.zone("zone")).once();
+      verify(zone.mocked.disk("test")).once();
+      verify(disk.mocked.getMetadata()).once();
+      verify(zone.mocked.createVM("vm", anything())).once();
+      capture(zone.mocked.createVM)
+        .last()
+        .should.deep.equal([
+          "vm",
+          {
+            disks: [
+              {
+                autoDelete: false,
+                boot: true,
+                deviceName: "test",
+                kind: "compute#attachedDisk",
+                mode: "READ_WRITE",
+                source: "link",
+                type: "PERSISTENT"
+              }
+            ],
+            guestAccelerators: [],
+            machineType: "custum-24-102400",
+            networkInterfaces: [
+              {
+                accessConfigs: [
+                  {
+                    kind: "compute#accessConfig",
+                    name: "External NAT",
+                    networkTier: "PREMIUM",
+                    type: "ONE_TO_ONE_NAT"
+                  }
+                ],
+                aliasIpRanges: [],
+                kind: "compute#networkInterface"
+              }
+            ],
+            scheduling: {
+              automaticRestart: false,
+              onHostMaintenance: "TERMINATE",
+              preemptible: false
+            },
+            tags: []
+          }
+        ]);
+    });
+    it("add accelerator", async () => {
+      const disk = mock.mockDisk({ selfLink: "link" });
+      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const compute = mock.mockCompute(
+        new Map([["zone", zone.instance]]),
+        new Map()
+      );
+      const gcp = new GCP(
+        mock.mockLabelOptions,
+        compute.instance,
+        "https://tmp"
+      );
+
+      await gcp.createMachine("vm", "test", "zone", "n1-highmem-4", {
+        accelerators: [{ deviceType: "nvidia-tesla-k80", count: 1 }],
+        preemptible: false,
+        tags: []
+      });
+      verify(compute.mocked.zone("zone")).once();
+      verify(zone.mocked.disk("test")).once();
+      verify(disk.mocked.getMetadata()).once();
+      verify(zone.mocked.createVM("vm", anything())).once();
+      capture(zone.mocked.createVM)
+        .last()
+        .should.deep.equal([
+          "vm",
+          {
+            disks: [
+              {
+                autoDelete: false,
+                boot: true,
+                deviceName: "test",
+                kind: "compute#attachedDisk",
+                mode: "READ_WRITE",
+                source: "link",
+                type: "PERSISTENT"
+              }
+            ],
+            guestAccelerators: [
+              { acceleratorType: "nvidia-tesla-k80", acceleratorCount: 1 }
+            ],
+            machineType: "n1-highmem-4",
+            networkInterfaces: [
+              {
+                accessConfigs: [
+                  {
+                    kind: "compute#accessConfig",
+                    name: "External NAT",
+                    networkTier: "PREMIUM",
+                    type: "ONE_TO_ONE_NAT"
+                  }
+                ],
+                aliasIpRanges: [],
+                kind: "compute#networkInterface"
+              }
+            ],
+            scheduling: {
+              automaticRestart: false,
+              onHostMaintenance: "TERMINATE",
+              preemptible: false
+            },
+            tags: []
+          }
+        ]);
+    });
+    it("specify the network tags", async () => {
+      const disk = mock.mockDisk({ selfLink: "link" });
+      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const compute = mock.mockCompute(
+        new Map([["zone", zone.instance]]),
+        new Map()
+      );
+      const gcp = new GCP(
+        mock.mockLabelOptions,
+        compute.instance,
+        "https://tmp"
+      );
+
+      await gcp.createMachine("vm", "test", "zone", "n1-highmem-4", {
+        accelerators: [],
+        preemptible: false,
+        tags: ["foo", "bar"]
+      });
+      verify(compute.mocked.zone("zone")).once();
+      verify(zone.mocked.disk("test")).once();
+      verify(disk.mocked.getMetadata()).once();
+      verify(zone.mocked.createVM("vm", anything())).once();
+      capture(zone.mocked.createVM)
+        .last()
+        .should.deep.equal([
+          "vm",
+          {
+            disks: [
+              {
+                autoDelete: false,
+                boot: true,
+                deviceName: "test",
+                kind: "compute#attachedDisk",
+                mode: "READ_WRITE",
+                source: "link",
+                type: "PERSISTENT"
+              }
+            ],
+            guestAccelerators: [],
+            machineType: "n1-highmem-4",
+            networkInterfaces: [
+              {
+                accessConfigs: [
+                  {
+                    kind: "compute#accessConfig",
+                    name: "External NAT",
+                    networkTier: "PREMIUM",
+                    type: "ONE_TO_ONE_NAT"
+                  }
+                ],
+                aliasIpRanges: [],
+                kind: "compute#networkInterface"
+              }
+            ],
+            scheduling: {
+              automaticRestart: false,
+              onHostMaintenance: "TERMINATE",
+              preemptible: false
+            },
+            tags: ["foo", "bar"]
+          }
+        ]);
+    });
+  });
 });
