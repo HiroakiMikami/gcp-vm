@@ -7,7 +7,7 @@
     "build": "$(npm bin)/tsc -p ./",
     "doc": "$(npm bin)/typedoc --out doc ./src/",
     "test": "$(npm bin)/mocha $(find ./out/test -name '*.js')",
-    "lint-fix": "$(npm bin)/eslint --fix $(find ./src/ -name '*.ts') $(find ./test -name '*.ts')",
+    "fix": "$(npm bin)/eslint --fix $(find ./src/ -name '*.ts') $(find ./test -name '*.ts')",
     "lint": "$(npm bin)/eslint $(find ./src/ -name '*.ts') $(find ./test -name '*.ts')"
   },
   "author": "Hiroaki Mikami",
