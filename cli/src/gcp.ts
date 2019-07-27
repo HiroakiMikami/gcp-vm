@@ -7,6 +7,29 @@ export interface LabelOptions {
   diskTypeLabel: string;
 }
 
+function zoneToRegion(zone: string): string {
+  const i = zone.lastIndexOf("-");
+  if (i === -1) {
+    return zone;
+  }
+  return zone.substr(0, i);
+}
+
+function parseDiskType(
+  apiUrl: string,
+  url: string
+): { diskType: string; project: string; zone: string } {
+  if (!url.startsWith(apiUrl)) {
+    throw new Error(`Invalid disk type: ${url}`);
+  }
+  const tokens = url.split("/");
+  return {
+    diskType: tokens[tokens.indexOf("diskTypes") + 1],
+    project: tokens[tokens.indexOf("projects") + 1],
+    zone: tokens[tokens.indexOf("zones") + 1]
+  };
+}
+
 function createDiskType(
   apiUrl: string,
   project: string,
@@ -85,6 +108,25 @@ export class GCP {
       type: createDiskType(this.apiUrl, project, zone, type)
     };
     const op = await disk.create(configs);
+    await op[1].promise();
+  }
+  public async createSnapshot(
+    diskName: string,
+    snapshotName: string,
+    zone: string
+  ): Promise<void> {
+    let labels = {};
+    labels[this.options.diskNameLabel] = `${zone}_${diskName}`;
+    const disk = this.compute.zone(zone).disk(diskName);
+
+    const [metadata] = await disk.getMetadata();
+    const type = parseDiskType(this.apiUrl, metadata.type);
+    labels[this.options.projectLabel] = type.project;
+    labels[this.options.diskTypeLabel] = type.diskType;
+
+    // Create snapshot
+    const configs = { labels, storageLocations: [zoneToRegion(zone)] };
+    const op = await disk.createSnapshot(snapshotName, configs);
     await op[1].promise();
   }
 }

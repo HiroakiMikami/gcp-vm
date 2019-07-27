@@ -33,6 +33,11 @@ interface SnapshotMetadata {
 interface Disk {
   exists(): Promise<[boolean]>;
   create(configs: {}): Promise<[{} | null, MockOperation]>;
+  getMetadata(): Promise<[{}]>;
+  createSnapshot(
+    name: string,
+    configs: {}
+  ): Promise<[{} | null, MockOperation]>;
 }
 
 interface Zone {
@@ -53,6 +58,10 @@ export function mockDisk(metadata: {} | null): MockObject<Disk> {
   let mockedDisk: Disk = mock<Disk>();
   if (metadata) {
     when(mockedDisk.exists()).thenResolve([true]);
+    when(mockedDisk.getMetadata()).thenResolve([metadata]);
+    when(mockedDisk.createSnapshot(anything(), anything())).thenCall(() => {
+      return Promise.resolve([null, new MockOperation()]);
+    });
   } else {
     when(mockedDisk.exists()).thenResolve([false]);
     when(mockedDisk.create(anything())).thenCall(() => {

@@ -110,4 +110,41 @@ describe("GCP", () => {
       }
     });
   });
+  describe("#createSnapshot", () => {
+    it("create snapshot", async () => {
+      const disk = mock.mockDisk({
+        selfLink: "link",
+        type: "https://tmp/projects/project/zones/zone/diskTypes/pd_standard"
+      });
+      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const compute = mock.mockCompute(
+        new Map([["zone", zone.instance]]),
+        new Map()
+      );
+      const gcp = new GCP(
+        mock.mockLabelOptions,
+        compute.instance,
+        "https://tmp"
+      );
+      await gcp.createSnapshot("test", "snapshot", "zone");
+
+      verify(compute.mocked.zone("zone")).once();
+      verify(zone.mocked.disk("test")).once();
+      verify(disk.mocked.getMetadata()).once();
+      verify(disk.mocked.createSnapshot(anything(), anything())).once();
+      capture(disk.mocked.createSnapshot)
+        .last()
+        .should.deep.equal([
+          "snapshot",
+          {
+            labels: {
+              diskName: "zone_test",
+              diskType: "pd_standard",
+              project: "project"
+            },
+            storageLocations: ["zone"]
+          }
+        ]);
+    });
+  });
 });
