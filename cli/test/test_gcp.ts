@@ -428,4 +428,23 @@ describe("GCP", () => {
       verify(vm.mocked.start()).once();
     });
   });
+  describe("#stopMachine", () => {
+    it("stop a VM", async () => {
+      const vm = mock.mockVm();
+      const zone = mock.mockZone(new Map([["vm", vm.instance]]), new Map());
+      const compute = mock.mockCompute(
+        new Map([["zone", zone.instance]]),
+        new Map()
+      );
+      const gcp = new GCP(
+        mock.mockLabelOptions,
+        compute.instance,
+        "https://tmp"
+      );
+      await gcp.stopMachine("vm", "zone");
+      verify(compute.mocked.zone("zone")).once();
+      verify(zone.mocked.vm("vm")).once();
+      verify(vm.mocked.stop()).once();
+    });
+  });
 });

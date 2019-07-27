@@ -217,4 +217,9 @@ export class GCP {
     const op = await vm.start();
     await op[0].promise();
   }
+  public async stopMachine(machineName: string, zone: string): Promise<void> {
+    const vm = this.compute.zone(zone).vm(machineName);
+    const op = await vm.stop();
+    await op[0].promise();
+  }
 }
