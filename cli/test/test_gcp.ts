@@ -35,7 +35,7 @@ describe("GCP", () => {
     });
     it("restore the disk from the newest snapshot", async () => {
       const disk = mock.mockDisk(null);
-      const oldSnapshot = mock.mcokSnapshot({
+      const oldSnapshot = mock.mockSnapshot({
         creationTimestamp: new Date("2018/1/1"),
         diskSizeGb: 32,
         labels: {
@@ -45,7 +45,7 @@ describe("GCP", () => {
         },
         selfLink: "old"
       });
-      const newSnapshot = mock.mcokSnapshot({
+      const newSnapshot = mock.mockSnapshot({
         creationTimestamp: new Date("2019/1/1"),
         diskSizeGb: 128,
         labels: {
@@ -445,6 +445,25 @@ describe("GCP", () => {
       verify(compute.mocked.zone("zone")).once();
       verify(zone.mocked.vm("vm")).once();
       verify(vm.mocked.stop()).once();
+    });
+  });
+  describe("#deleteMachine", () => {
+    it("delete a VM", async () => {
+      const vm = mock.mockVm();
+      const zone = mock.mockZone(new Map([["vm", vm.instance]]), new Map());
+      const compute = mock.mockCompute(
+        new Map([["zone", zone.instance]]),
+        new Map()
+      );
+      const gcp = new GCP(
+        mock.mockLabelOptions,
+        compute.instance,
+        "https://tmp"
+      );
+      await gcp.deleteMachine("vm", "zone");
+      verify(compute.mocked.zone("zone")).once();
+      verify(zone.mocked.vm("vm")).once();
+      verify(vm.mocked.delete()).once();
     });
   });
 });
