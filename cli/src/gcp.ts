@@ -1,6 +1,9 @@
 import * as Compute from "@google-cloud/compute";
+import * as log4js from "log4js";
 import { Dictionary } from "lodash";
 import { isString } from "util";
+
+const logger = log4js.getLogger();
 
 export interface LabelOptions {
   diskNameLabel: string;
@@ -92,14 +95,19 @@ export class GCP {
 
     if ((await disk.exists())[0]) {
       // Disk exists
+      logger.info(`The disk (${diskName}) already exists`);
       return;
     }
 
     // Find the newest snapshot corresponding to the disk
+    logger.info(`Find the newest snapstho corresponding to (${diskName})`);
     const snapshots = (await this.compute.getSnapshots({
       filter: `labels.${this.options.diskNameLabel}=${zone}_${diskName}`
     }))[0];
-    let snapshotsWithMetadata: [{}, SnapshotMetadata][] = await Promise.all(
+    let snapshotsWithMetadata: [
+      { name: string },
+      SnapshotMetadata
+    ][] = await Promise.all(
       snapshots.map(async snapshot => {
         const data = (await snapshot.getMetadata())[0];
         return [snapshot, data];
@@ -115,9 +123,13 @@ export class GCP {
       );
     }
 
-    const metadata = snapshotsWithMetadata[snapshotsWithMetadata.length - 1][1];
+    const [snapshot, metadata] = snapshotsWithMetadata[
+      snapshotsWithMetadata.length - 1
+    ];
+    logger.debug(`The newst snapshot: ${snapshot.name}`);
 
     // Create a disk from the snapshot
+    logger.info(`Create a disk from the snapshot`);
     const type = metadata.labels[this.options.diskTypeLabel];
     const project = metadata.labels[this.options.projectLabel];
     const configs = {
@@ -125,6 +137,7 @@ export class GCP {
       sourceSnapshot: metadata.selfLink,
       type: createDiskType(this.apiUrl, project, zone, type)
     };
+    logger.debug(`The config of disk.create: ${JSON.stringify(configs)}`);
     const op = await disk.create(configs);
     await op[1].promise();
   }
@@ -144,6 +157,7 @@ export class GCP {
 
     // Create snapshot
     const configs = { labels, storageLocations: [zoneToRegion(zone)] };
+    logger.debug(`The config of createSnapshot: ${JSON.stringify(configs)}`);
     const op = await disk.createSnapshot(snapshotName, configs);
     await op[1].promise();
   }
@@ -209,6 +223,7 @@ export class GCP {
     };
 
     // Create VM
+    logger.debug(`The config of createVM: ${JSON.stringify(configs)}`);
     const op = await zoneObj.createVM(machineName, configs);
     await op[1].promise();
   }
