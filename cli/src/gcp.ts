@@ -212,4 +212,9 @@ export class GCP {
     const op = await zoneObj.createVM(machineName, configs);
     await op[1].promise();
   }
+  public async startMachine(machineName: string, zone: string): Promise<void> {
+    const vm = this.compute.zone(zone).vm(machineName);
+    const op = await vm.start();
+    await op[0].promise();
+  }
 }

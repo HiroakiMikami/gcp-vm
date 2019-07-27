@@ -40,8 +40,13 @@ interface Disk {
   ): Promise<[{} | null, MockOperation]>;
 }
 
+interface Vm {
+  start(): Promise<[MockOperation]>;
+}
+
 interface Zone {
   disk(name: string): Disk;
+  vm(name: string): Vm;
   createVM(name: string, configs: {}): Promise<[{} | null, MockOperation]>;
 }
 
@@ -75,8 +80,22 @@ export function mockDisk(metadata: {} | null): MockObject<Disk> {
   return { mocked: mockedDisk, instance: disk };
 }
 
-export function mockZone(disks: ReadonlyMap<string, Disk>): MockObject<Zone> {
+export function mockVm(): MockObject<Vm> {
+  let mockedVm = mock<Vm>();
+  when(mockedVm.start()).thenResolve([new MockOperation()]);
+  const vm = instance(mockedVm);
+
+  return { mocked: mockedVm, instance: vm };
+}
+
+export function mockZone(
+  vms: ReadonlyMap<string, Vm>,
+  disks: ReadonlyMap<string, Disk>
+): MockObject<Zone> {
   let mockedZone: Zone = mock<Zone>();
+  vms.forEach((vm, name) => {
+    when(mockedZone.vm(name)).thenReturn(vm);
+  });
   disks.forEach((disk, name) => {
     when(mockedZone.disk(name)).thenReturn(disk);
   });

@@ -12,7 +12,7 @@ describe("GCP", () => {
   describe("#restoreDisk", () => {
     it("do nothing if the disk exists", async () => {
       const disk = mock.mockDisk({ selfLink: "link" });
-      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
       const compute = mock.mockCompute(
         new Map([["zone", zone.instance]]),
         new Map()
@@ -55,7 +55,7 @@ describe("GCP", () => {
         },
         selfLink: "new"
       });
-      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
       const compute = mock.mockCompute(
         new Map([["zone", zone.instance]]),
         new Map([["old", oldSnapshot.instance], ["new", newSnapshot.instance]])
@@ -90,7 +90,7 @@ describe("GCP", () => {
     });
     it("throw an error if there are no disks and no snapshots", async () => {
       const disk = mock.mockDisk(null);
-      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
       const compute = mock.mockCompute(
         new Map([["zone", zone.instance]]),
         new Map()
@@ -116,7 +116,7 @@ describe("GCP", () => {
         selfLink: "link",
         type: "https://tmp/projects/project/zones/zone/diskTypes/pd_standard"
       });
-      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
       const compute = mock.mockCompute(
         new Map([["zone", zone.instance]]),
         new Map()
@@ -150,7 +150,7 @@ describe("GCP", () => {
   describe("#createMachine", () => {
     it("create a VM", async () => {
       const disk = mock.mockDisk({ selfLink: "link" });
-      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
       const compute = mock.mockCompute(
         new Map([["zone", zone.instance]]),
         new Map()
@@ -213,7 +213,7 @@ describe("GCP", () => {
     });
     it("specify a custum machine type", async () => {
       const disk = mock.mockDisk({ selfLink: "link" });
-      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
       const compute = mock.mockCompute(
         new Map([["zone", zone.instance]]),
         new Map()
@@ -282,7 +282,7 @@ describe("GCP", () => {
     });
     it("add accelerator", async () => {
       const disk = mock.mockDisk({ selfLink: "link" });
-      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
       const compute = mock.mockCompute(
         new Map([["zone", zone.instance]]),
         new Map()
@@ -347,7 +347,7 @@ describe("GCP", () => {
     });
     it("specify the network tags", async () => {
       const disk = mock.mockDisk({ selfLink: "link" });
-      const zone = mock.mockZone(new Map([["test", disk.instance]]));
+      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
       const compute = mock.mockCompute(
         new Map([["zone", zone.instance]]),
         new Map()
@@ -407,6 +407,25 @@ describe("GCP", () => {
             tags: ["foo", "bar"]
           }
         ]);
+    });
+  });
+  describe("#startMachine", () => {
+    it("start a VM", async () => {
+      const vm = mock.mockVm();
+      const zone = mock.mockZone(new Map([["vm", vm.instance]]), new Map());
+      const compute = mock.mockCompute(
+        new Map([["zone", zone.instance]]),
+        new Map()
+      );
+      const gcp = new GCP(
+        mock.mockLabelOptions,
+        compute.instance,
+        "https://tmp"
+      );
+      await gcp.startMachine("vm", "zone");
+      verify(compute.mocked.zone("zone")).once();
+      verify(zone.mocked.vm("vm")).once();
+      verify(vm.mocked.start()).once();
     });
   });
 });
