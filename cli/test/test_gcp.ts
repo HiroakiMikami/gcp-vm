@@ -1,7 +1,8 @@
 /* eslint-env mocha */
 
 import * as chai from "chai";
-import * as mock from "./mock";
+import * as mock from "gcp-vm-mock";
+import * as mockito from "ts-mockito";
 import { verify, anything, capture } from "ts-mockito";
 chai.should();
 
@@ -11,9 +12,14 @@ import { fail } from "assert";
 describe("GCP", () => {
   describe("#restoreDisk", () => {
     it("do nothing if the disk exists", async () => {
-      const disk = mock.mockDisk({ selfLink: "link" });
-      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
+      const disk = mock.mockDisk(mockito, { selfLink: "link" });
+      const zone = mock.mockZone(
+        mockito,
+        new Map(),
+        new Map([["test", disk.instance]])
+      );
       const compute = mock.mockCompute(
+        mockito,
         new Map([["zone", zone.instance]]),
         new Map()
       );
@@ -34,8 +40,8 @@ describe("GCP", () => {
       verify(disk.mocked.create(anything())).never();
     });
     it("restore the disk from the newest snapshot", async () => {
-      const disk = mock.mockDisk(null);
-      const oldSnapshot = mock.mockSnapshot({
+      const disk = mock.mockDisk(mockito, null);
+      const oldSnapshot = mock.mockSnapshot(mockito, {
         creationTimestamp: new Date("2018/1/1"),
         diskSizeGb: 32,
         labels: {
@@ -45,7 +51,7 @@ describe("GCP", () => {
         },
         selfLink: "old"
       });
-      const newSnapshot = mock.mockSnapshot({
+      const newSnapshot = mock.mockSnapshot(mockito, {
         creationTimestamp: new Date("2019/1/1"),
         diskSizeGb: 128,
         labels: {
@@ -55,8 +61,13 @@ describe("GCP", () => {
         },
         selfLink: "new"
       });
-      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
+      const zone = mock.mockZone(
+        mockito,
+        new Map(),
+        new Map([["test", disk.instance]])
+      );
       const compute = mock.mockCompute(
+        mockito,
         new Map([["zone", zone.instance]]),
         new Map([["old", oldSnapshot.instance], ["new", newSnapshot.instance]])
       );
@@ -89,9 +100,14 @@ describe("GCP", () => {
         ]);
     });
     it("throw an error if there are no disks and no snapshots", async () => {
-      const disk = mock.mockDisk(null);
-      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
+      const disk = mock.mockDisk(mockito, null);
+      const zone = mock.mockZone(
+        mockito,
+        new Map(),
+        new Map([["test", disk.instance]])
+      );
       const compute = mock.mockCompute(
+        mockito,
         new Map([["zone", zone.instance]]),
         new Map()
       );
@@ -112,12 +128,17 @@ describe("GCP", () => {
   });
   describe("#createSnapshot", () => {
     it("create snapshot", async () => {
-      const disk = mock.mockDisk({
+      const disk = mock.mockDisk(mockito, {
         selfLink: "link",
         type: "https://tmp/projects/project/zones/zone/diskTypes/pd_standard"
       });
-      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
+      const zone = mock.mockZone(
+        mockito,
+        new Map(),
+        new Map([["test", disk.instance]])
+      );
       const compute = mock.mockCompute(
+        mockito,
         new Map([["zone", zone.instance]]),
         new Map()
       );
@@ -149,9 +170,14 @@ describe("GCP", () => {
   });
   describe("#createMachine", () => {
     it("create a VM", async () => {
-      const disk = mock.mockDisk({ selfLink: "link" });
-      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
+      const disk = mock.mockDisk(mockito, { selfLink: "link" });
+      const zone = mock.mockZone(
+        mockito,
+        new Map(),
+        new Map([["test", disk.instance]])
+      );
       const compute = mock.mockCompute(
+        mockito,
         new Map([["zone", zone.instance]]),
         new Map()
       );
@@ -212,9 +238,14 @@ describe("GCP", () => {
         ]);
     });
     it("specify a custum machine type", async () => {
-      const disk = mock.mockDisk({ selfLink: "link" });
-      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
+      const disk = mock.mockDisk(mockito, { selfLink: "link" });
+      const zone = mock.mockZone(
+        mockito,
+        new Map(),
+        new Map([["test", disk.instance]])
+      );
       const compute = mock.mockCompute(
+        mockito,
         new Map([["zone", zone.instance]]),
         new Map()
       );
@@ -281,9 +312,14 @@ describe("GCP", () => {
         ]);
     });
     it("add accelerator", async () => {
-      const disk = mock.mockDisk({ selfLink: "link" });
-      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
+      const disk = mock.mockDisk(mockito, { selfLink: "link" });
+      const zone = mock.mockZone(
+        mockito,
+        new Map(),
+        new Map([["test", disk.instance]])
+      );
       const compute = mock.mockCompute(
+        mockito,
         new Map([["zone", zone.instance]]),
         new Map()
       );
@@ -346,9 +382,14 @@ describe("GCP", () => {
         ]);
     });
     it("specify the network tags", async () => {
-      const disk = mock.mockDisk({ selfLink: "link" });
-      const zone = mock.mockZone(new Map(), new Map([["test", disk.instance]]));
+      const disk = mock.mockDisk(mockito, { selfLink: "link" });
+      const zone = mock.mockZone(
+        mockito,
+        new Map(),
+        new Map([["test", disk.instance]])
+      );
       const compute = mock.mockCompute(
+        mockito,
         new Map([["zone", zone.instance]]),
         new Map()
       );
@@ -411,9 +452,14 @@ describe("GCP", () => {
   });
   describe("#startMachine", () => {
     it("start a VM", async () => {
-      const vm = mock.mockVm({});
-      const zone = mock.mockZone(new Map([["vm", vm.instance]]), new Map());
+      const vm = mock.mockVm(mockito, {});
+      const zone = mock.mockZone(
+        mockito,
+        new Map([["vm", vm.instance]]),
+        new Map()
+      );
       const compute = mock.mockCompute(
+        mockito,
         new Map([["zone", zone.instance]]),
         new Map()
       );
@@ -430,9 +476,14 @@ describe("GCP", () => {
   });
   describe("#stopMachine", () => {
     it("stop a VM", async () => {
-      const vm = mock.mockVm({});
-      const zone = mock.mockZone(new Map([["vm", vm.instance]]), new Map());
+      const vm = mock.mockVm(mockito, {});
+      const zone = mock.mockZone(
+        mockito,
+        new Map([["vm", vm.instance]]),
+        new Map()
+      );
       const compute = mock.mockCompute(
+        mockito,
         new Map([["zone", zone.instance]]),
         new Map()
       );
@@ -449,9 +500,14 @@ describe("GCP", () => {
   });
   describe("#deleteMachine", () => {
     it("delete a VM", async () => {
-      const vm = mock.mockVm({});
-      const zone = mock.mockZone(new Map([["vm", vm.instance]]), new Map());
+      const vm = mock.mockVm(mockito, {});
+      const zone = mock.mockZone(
+        mockito,
+        new Map([["vm", vm.instance]]),
+        new Map()
+      );
       const compute = mock.mockCompute(
+        mockito,
         new Map([["zone", zone.instance]]),
         new Map()
       );
@@ -468,11 +524,16 @@ describe("GCP", () => {
   });
   describe("#getPublicIpAddress", () => {
     it("query the public IP address of the VM", async () => {
-      const vm = mock.mockVm({
+      const vm = mock.mockVm(mockito, {
         networkInterfaces: [{ accessConfigs: [{ natIP: "result" }] }]
       });
-      const zone = mock.mockZone(new Map([["vm", vm.instance]]), new Map());
+      const zone = mock.mockZone(
+        mockito,
+        new Map([["vm", vm.instance]]),
+        new Map()
+      );
       const compute = mock.mockCompute(
+        mockito,
         new Map([["zone", zone.instance]]),
         new Map()
       );

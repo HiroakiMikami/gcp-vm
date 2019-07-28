@@ -14,17 +14,19 @@ jobs:
     steps:
       - checkout
 
+      # Build mock library
+      - run: cd mock-google-cloud-compute && npm install
+      - run: cd mock-google-cloud-compute && npm run build
+      - run: cd mock-google-cloud-compute && npm run lint
+
       # Test CLI
-      - restore_cache:
-          keys:
-          - v1-dependencies-{{ checksum "cli/package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
       - run: cd cli && npm install
       - run: cd cli && npm run build
-      - save_cache:
-          paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "cli/package.json" }}
       - run: cd cli && npm run lint
       - run: cd cli && npm test
+
+      # Test Daemon
+      - run: cd daemon && npm install
+      - run: cd daemon && npm run build
+      - run: cd daemon && npm run lint
+      - run: cd daemon && npm test
