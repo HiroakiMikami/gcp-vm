@@ -42,6 +42,7 @@ interface SnapshotMetadata {
 interface Disk {
   exists(): Promise<[boolean]>;
   create(configs: {}): Promise<[{} | null, MockOperation]>;
+  delete(): Promise<[{} | null, MockOperation]>;
   getMetadata(): Promise<[{}]>;
   createSnapshot(
     name: string,
@@ -60,6 +61,7 @@ interface Zone {
   disk(name: string): Disk;
   vm(name: string): Vm;
   createVM(name: string, configs: {}): Promise<[{} | null, MockOperation]>;
+  getVMs(): Promise<Vm[]>;
 }
 
 export function mockSnapshot(
@@ -88,6 +90,9 @@ export function mockDisk(
       .thenCall(() => {
         return Promise.resolve([null, new MockOperation()]);
       });
+    mock.when(mockedDisk.delete()).thenCall(() => {
+      return Promise.resolve([null, new MockOperation()]);
+    });
   } else {
     mock.when(mockedDisk.exists()).thenResolve([false]);
     mock.when(mockedDisk.create(mock.anything())).thenCall(() => {
@@ -128,6 +133,7 @@ export function mockZone(
     .thenCall(() => {
       return Promise.resolve([null, new MockOperation()]);
     });
+  mock.when(mockedZone.getVMs()).thenResolve([Array.from(vms).map(x => x[1])]);
   const zone = mock.instance(mockedZone);
 
   return { mocked: mockedZone, instance: zone };

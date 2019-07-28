@@ -12,5 +12,5 @@
         "lib": [ "es2016" ],
         "sourceMap": true
     },
-    "exclude": [ "node_modules", "out" ]
+    "exclude": [ "node_modules" ]
 }
