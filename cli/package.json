@@ -33,6 +33,7 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
+    "gcp-vm-mock": "file:../mock-google-cloud-compute",
     "@google-cloud/compute": "^1.1.1",
     "commander": "^2.20.0",
     "log4js": "^4.5.1"

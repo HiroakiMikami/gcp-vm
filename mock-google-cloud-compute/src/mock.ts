@@ -1,6 +1,15 @@
-import { mock, instance, when, anything } from "ts-mockito";
+/* eslint @typescript-eslint/no-explicit-any: 0 */
+
 import * as Compute from "@google-cloud/compute";
 import { Dictionary } from "lodash";
+
+interface TsMockito {
+  mock<T>(clazz?: T): T;
+  instance<T>(mockedValue: T): T;
+  when<T>(method: Promise<T>): any;
+  when<T>(method: T): any;
+  anything(): any;
+}
 
 export const mockLabelOptions = {
   diskNameLabel: "diskName",
@@ -53,75 +62,87 @@ interface Zone {
   createVM(name: string, configs: {}): Promise<[{} | null, MockOperation]>;
 }
 
-export function mockSnapshot(metadata: SnapshotMetadata): MockObject<Snapshot> {
-  let mockedSnapshot: Snapshot = mock<Snapshot>();
+export function mockSnapshot(
+  mock: TsMockito,
+  metadata: SnapshotMetadata
+): MockObject<Snapshot> {
+  let mockedSnapshot: Snapshot = mock.mock<Snapshot>();
   if (metadata) {
-    when(mockedSnapshot.getMetadata()).thenResolve([metadata]);
+    mock.when(mockedSnapshot.getMetadata()).thenResolve([metadata]);
   }
-  let snapshot = instance(mockedSnapshot);
+  let snapshot = mock.instance(mockedSnapshot);
   snapshot.metadata = metadata;
   return { mocked: mockedSnapshot, instance: snapshot };
 }
 
-export function mockDisk(metadata: {} | null): MockObject<Disk> {
-  let mockedDisk: Disk = mock<Disk>();
+export function mockDisk(
+  mock: TsMockito,
+  metadata: {} | null
+): MockObject<Disk> {
+  let mockedDisk: Disk = mock.mock<Disk>();
   if (metadata) {
-    when(mockedDisk.exists()).thenResolve([true]);
-    when(mockedDisk.getMetadata()).thenResolve([metadata]);
-    when(mockedDisk.createSnapshot(anything(), anything())).thenCall(() => {
-      return Promise.resolve([null, new MockOperation()]);
-    });
+    mock.when(mockedDisk.exists()).thenResolve([true]);
+    mock.when(mockedDisk.getMetadata()).thenResolve([metadata]);
+    mock
+      .when(mockedDisk.createSnapshot(mock.anything(), mock.anything()))
+      .thenCall(() => {
+        return Promise.resolve([null, new MockOperation()]);
+      });
   } else {
-    when(mockedDisk.exists()).thenResolve([false]);
-    when(mockedDisk.create(anything())).thenCall(() => {
-      when(mockedDisk.exists()).thenResolve([true]); // TODO
+    mock.when(mockedDisk.exists()).thenResolve([false]);
+    mock.when(mockedDisk.create(mock.anything())).thenCall(() => {
+      mock.when(mockedDisk.exists()).thenResolve([true]); // TODO
       return Promise.resolve([null, new MockOperation()]);
     });
   }
-  const disk = instance(mockedDisk);
+  const disk = mock.instance(mockedDisk);
 
   return { mocked: mockedDisk, instance: disk };
 }
 
-export function mockVm(metadata: {}): MockObject<Vm> {
-  let mockedVm = mock<Vm>();
-  when(mockedVm.start()).thenResolve([new MockOperation()]);
-  when(mockedVm.stop()).thenResolve([new MockOperation()]);
-  when(mockedVm.delete()).thenResolve([new MockOperation()]);
-  when(mockedVm.getMetadata()).thenResolve([metadata]);
-  const vm = instance(mockedVm);
+export function mockVm(mock: TsMockito, metadata: {}): MockObject<Vm> {
+  let mockedVm = mock.mock<Vm>();
+  mock.when(mockedVm.start()).thenResolve([new MockOperation()]);
+  mock.when(mockedVm.stop()).thenResolve([new MockOperation()]);
+  mock.when(mockedVm.delete()).thenResolve([new MockOperation()]);
+  mock.when(mockedVm.getMetadata()).thenResolve([metadata]);
+  const vm = mock.instance(mockedVm);
 
   return { mocked: mockedVm, instance: vm };
 }
 
 export function mockZone(
+  mock: TsMockito,
   vms: ReadonlyMap<string, Vm>,
   disks: ReadonlyMap<string, Disk>
 ): MockObject<Zone> {
-  let mockedZone: Zone = mock<Zone>();
+  let mockedZone: Zone = mock.mock<Zone>();
   vms.forEach((vm, name) => {
-    when(mockedZone.vm(name)).thenReturn(vm);
+    mock.when(mockedZone.vm(name)).thenReturn(vm);
   });
   disks.forEach((disk, name) => {
-    when(mockedZone.disk(name)).thenReturn(disk);
+    mock.when(mockedZone.disk(name)).thenReturn(disk);
   });
-  when(mockedZone.createVM(anything(), anything())).thenCall(() => {
-    return Promise.resolve([null, new MockOperation()]);
-  });
-  const zone = instance(mockedZone);
+  mock
+    .when(mockedZone.createVM(mock.anything(), mock.anything()))
+    .thenCall(() => {
+      return Promise.resolve([null, new MockOperation()]);
+    });
+  const zone = mock.instance(mockedZone);
 
   return { mocked: mockedZone, instance: zone };
 }
 
 export function mockCompute(
+  mock: TsMockito,
   zones: ReadonlyMap<string, Zone>,
   snapshots: ReadonlyMap<string, Snapshot>
 ): MockObject<Compute> {
-  let mockedCompute: Compute = mock(Compute);
+  let mockedCompute: Compute = mock.mock(Compute);
   zones.forEach((zone, name) => {
-    when(mockedCompute.zone(name)).thenReturn(zone);
+    mock.when(mockedCompute.zone(name)).thenReturn(zone);
   });
-  when(mockedCompute.getSnapshots(anything())).thenCall(query => {
+  mock.when(mockedCompute.getSnapshots(mock.anything())).thenCall(query => {
     if (
       (query.filter as string).startsWith(
         `labels.${mockLabelOptions.diskNameLabel}=`
@@ -144,7 +165,7 @@ export function mockCompute(
     }
     return Promise.resolve([[]]);
   });
-  const compute = instance(mockedCompute);
+  const compute = mock.instance(mockedCompute);
 
   return { mocked: mockedCompute, instance: compute };
 }
