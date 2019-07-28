@@ -31,6 +31,7 @@ export interface MockObject<T> {
 interface Snapshot {
   metadata: SnapshotMetadata;
   getMetadata(): Promise<[SnapshotMetadata]>;
+  delete(): Promise<[{} | null, MockOperation]>;
 }
 interface SnapshotMetadata {
   labels: Dictionary<string>;
@@ -72,6 +73,9 @@ export function mockSnapshot(
   if (metadata) {
     mock.when(mockedSnapshot.getMetadata()).thenResolve([metadata]);
   }
+  mock.when(mockedSnapshot.delete()).thenCall(() => {
+    return Promise.resolve([null, new MockOperation()]);
+  });
   let snapshot = mock.instance(mockedSnapshot);
   snapshot.metadata = metadata;
   return { mocked: mockedSnapshot, instance: snapshot };
