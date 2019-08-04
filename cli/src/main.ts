@@ -110,7 +110,7 @@ async function main(): Promise<void> {
     // Define command-specific options
     program
       .command("launch <disk>")
-      .option("--zone", "The GCP zone")
+      .option("--zone <zone>", "The GCP zone")
       .option("--machine-type <machine_type>", "The machine type of VM")
       .option("--vcpu <n>", "The number of CPUs")
       .option("--vmemory <n>", "The size of the memory [GB]")
@@ -131,28 +131,28 @@ async function main(): Promise<void> {
       });
     program
       .command("resume <disk>")
-      .option("--zone", "The GCP zone")
+      .option("--zone <zone>", "The GCP zone")
       .action(async (disk, cmd) => {
         const configs = await loadLocalConfigs(configDir, disk);
         await new Cli(initialize(program), disk, cmd, configs).resume();
       });
     program
       .command("pause <disk>")
-      .option("--zone", "The GCP zone")
+      .option("--zone <zone>", "The GCP zone")
       .action(async function(disk, cmd) {
         const configs = await loadLocalConfigs(configDir, disk);
         await new Cli(initialize(program), disk, cmd, configs).pause();
       });
     program
       .command("terminate <disk>")
-      .option("--zone", "The GCP zone")
+      .option("--zone <zone>", "The GCP zone")
       .action(async function(disk, cmd) {
         const configs = await loadLocalConfigs(configDir, disk);
         await new Cli(initialize(program), disk, cmd, configs).terminate();
       });
     program
       .command("ip-address <disk>")
-      .option("--zone", "The GCP zone")
+      .option("--zone <zone>", "The GCP zone")
       .action(async function(disk, cmd) {
         const configs = await loadLocalConfigs(configDir, disk);
         const address = await new Cli(
